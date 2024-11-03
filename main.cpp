@@ -3,17 +3,15 @@
 using namespace std;
 int main()
 {
-    int width = 100;
-    int height = 100;
-    int channel = 3;
+    Imginfo info;
+    info.width = 100;
+    info.height = 100;
+    info.channels = 3;
     Bmputil bmp;
     // Init Frame Buffer
-    unsigned char **FB = bmp.init_image(width, height, channel);
-    for (int i = 0; i < width * height; i++)
-    {
-        FB[i][2] = (unsigned char)i;
-    }
-    bmp.generate_bmp("file.bmp", width, height, channel, FB);
+    unsigned char **FB = bmp.init_image(info);
+    bmp.colorize(info, FB, 255, 143, 30);
+    bmp.generate_bmp("file.bmp", info, FB);
     free(FB);
     return 0;
 }

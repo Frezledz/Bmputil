@@ -9,33 +9,32 @@ using namespace std;
 void hexStrtoint(string input, vector<unsigned char> &output);
 void pushint(int value, int size, vector<unsigned char> &output);
 
-struct Image
+struct Imginfo
 {
-    unsigned char **FB;
-    int width;
     int height;
     int channels;
+    int width;
 };
 
 class Bmputil
 {
 public:
-    int generate_bmp(string name, int width, int height, int channelcount, unsigned char **FB)
+    int generate_bmp(string name, Imginfo &info, unsigned char **FB)
     {
         vector<unsigned char> header;
         // HEADER
         hexStrtoint("424D", header);
-        pushint(width * height * channelcount + 55, 4, header); // 55+image width*height*(channel count)(+1?)
+        pushint(info.width * info.height * info.channels + 55, 4, header); // 55+image width*height*(channel count)(+1?)
 
         hexStrtoint("0000000036000000", header);
         // INFO HEADER
         hexStrtoint("28000000", header);
-        pushint(width, 4, header);
-        pushint(height, 4, header);
+        pushint(info.width, 4, header);
+        pushint(info.height, 4, header);
         hexStrtoint("0100", header);
-        pushint(channelcount << 3, 2, header);
+        pushint(info.channels << 3, 2, header);
         hexStrtoint("00000000", header);
-        pushint((width * height * channelcount), 4, header);
+        pushint((info.width * info.height * info.channels), 4, header);
         hexStrtoint("00000000000000000000000000000000", header);
         ofstream file;
         file.open(name, ios::binary);
@@ -43,9 +42,9 @@ public:
         {
             file.write((char *)&header[i], sizeof(unsigned char));
         }
-        for (int i = 0; i < width * height; i++)
+        for (int i = 0; i < info.width * info.height; i++)
         {
-            for (int ii = 0; ii < channelcount; ii++)
+            for (int ii = 0; ii < info.channels; ii++)
             {
                 file.write((char *)&(FB[i][ii]), sizeof(char));
             }
@@ -54,18 +53,32 @@ public:
         return 0;
     };
 
-    unsigned char **init_image(int width, int height, int channel)
+    unsigned char **init_image(Imginfo &info)
     {
-        unsigned char **FB = (unsigned char **)malloc(sizeof(unsigned char *) * width * height);
-        for (int i = 0; i < width * height; i++)
+        unsigned char **FB = (unsigned char **)malloc(sizeof(unsigned char *) * info.width * info.height);
+        for (int i = 0; i < info.width * info.height; i++)
         {
-            FB[i] = (unsigned char *)malloc(sizeof(unsigned char) * channel);
-            for (int ii = 0; ii < channel; ii++)
+            FB[i] = (unsigned char *)malloc(sizeof(unsigned char) * info.channels);
+            for (int ii = 0; ii < info.channels; ii++)
             {
                 FB[i][ii] = 0; // NULLはよくないな
             }
         }
         return FB;
+    };
+    void colorize(Imginfo &info, unsigned char **FB, unsigned char B = NULL, unsigned char G = NULL, unsigned char R = NULL, unsigned char A = NULL)
+    {
+        for (int i = 0; i < (info.width * info.height); i++)
+        {
+            if (B != NULL)
+                FB[i][0] = B;
+            if (G != NULL || info.channels > 1)
+                FB[i][1] = G;
+            if (R != NULL || info.channels > 2)
+                FB[i][2] = R;
+            if (A != NULL || info.channels > 3)
+                FB[i][3] = A;
+        }
     }
 
 private:
